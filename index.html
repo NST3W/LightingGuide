@@ -98,7 +98,7 @@ var FIELDS=[
  {k:"speed",t:"Part motion",o:[["static","Static / slow"],["fast","Fast inline"]]},
  {k:"ambient",t:"Environment",o:[["enclosed","Enclosed / controlled"],["open","Open factory light"]]},
  {k:"space",t:"Space around the part",o:[["ok","Enough room"],["tight","Tight"]]},
- {k:"fov",t:"Field of view",o:[["small","Small (under 50 mm)"],["large","Large (over 150 mm)"]]}
+ {k:"fov",t:"Field of view",o:[["small","Small (under 50 mm)"],["medium","Medium (50 to 150 mm)"],["large","Large (over 150 mm)"]]}
 ];
 var LIGHTS={
  bright:["Bright-field ring or bar","Direct, even illumination. Good general-purpose choice on matte parts."],
@@ -142,6 +142,7 @@ var RULES=[
  [{material:["paper"]},{bright:2,dome:1},"Paper and film respond well to even front light."],
  [{surface:["mirror"],shape:["complex"]},{dome:3,coax:-2,multi:1},"Complex glossy parts need light from every angle."],
  [{space:["tight"]},{dome:-2,dark:-1,multi:-1},"Tight space: domes and rings need room and working distance."],
+ [{fov:["medium"]},{coax:-1,dome:-1},"Medium field of view: coaxial and dome units get larger; check the housing size."],
  [{fov:["large"]},{coax:-3,dome:-2,multi:-1,bar:1},"Large field of view: coaxial and dome units become huge and costly."],
  [{speed:["fast"]},{coax:-2,dome:-1,multi:-1},"Fast lines: diffuse optics waste light and need strobing."]
 ];
@@ -206,6 +207,7 @@ function mods(){
  if(st.ambient==="open")m.push("Open light: add an enclosure or shroud, or use a narrow-band color light with a matching bandpass filter.");
  if(st.space==="tight")m.push("Tight space: choose a compact bar or coaxial unit and a shorter working distance.");
  if(st.fov==="large")m.push("Large field of view: check light uniformity; you may need several bars.");
+ if(st.fov==="medium")m.push("Medium field of view: confirm the light covers the whole field evenly.");
  if(st.goal==="measure")m.push("For high accuracy, pair a collimated backlight with a telecentric lens.");
  if(st.goal==="color")m.push("Use a color camera; colored light can wash out small color differences.");
  else if(st.material==="metal"&&st.surface!=="matte")m.push("Shiny metal: try blue light for small features, or red for less ambient sensitivity.");
