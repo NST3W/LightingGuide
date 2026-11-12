@@ -60,6 +60,8 @@ button.ap:hover{background:var(--ac);color:var(--acs)}
 .mods{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .mods li{margin-bottom:4px}
 .wn{color:var(--ac2)}
+.vd{margin:8px 0 0;padding:8px 10px;border-left:3px solid var(--ac);background:var(--bg);font-size:13px;color:var(--mute)}
+.vd b{color:var(--ink);font-weight:600;display:inline-block;min-width:96px}
 .empty{color:var(--mute)}
 .foot{margin-top:16px;color:var(--mute);font-size:13px}
 </style>
@@ -86,7 +88,7 @@ button.ap:hover{background:var(--ac);color:var(--acs)}
       <div id="out"></div>
     </div>
   </div>
-  <p class="foot">The photo is analyzed in your browser and is not uploaded anywhere.</p>
+  <p class="foot">The photo is analyzed in your browser and is not uploaded anywhere. Brand series names are a starting point: confirm size, color and availability in the current catalog.</p>
 </div>
 <script>
 var FIELDS=[
@@ -111,6 +113,18 @@ var LIGHTS={
  struct:["Structured light / laser line","Projects a pattern to measure height and shape."],
  polar:["Cross-polarized light","Polarizers on light and lens cut specular glare."]
 };
+var VENDORS={
+ bright:["LDR2 ring, LB diffused bar","MDRL direct ring, MBRL / MHBC bar","VL-DR direct ring, VL-ADS direct square"],
+ dark:["LDR2 low-angle (LA) models, FPQ3 low-angle square","CV-RLA low-angle ring","VL-LR / VLR low-angle ring"],
+ bar:["LDL2 bar, HLDL3 bar","CV-BA bar, MBRL / MHBC bar","VL-B (adjustable angle), VL-AB-1 bar"],
+ coax:["LFV series coaxial","MCEC / MCEL coaxial, MSCL simulated coaxial","VL-EXC external coaxial box"],
+ dome:["LFXV-PF flat dome","MDML / MSDC dome","VL-D dome (confirm series)"],
+ multi:["Ask vendor","MDML large dome (coaxial box + low-angle ring)","Ask vendor"],
+ back:["TH-PF flat (strobe), MFU collimated","MDBC direct, CV-NFL near-collimated","VL-CB / VL-EB backlights"],
+ struct:["Line pattern lights (confirm series)","Ask vendor","Ask vendor"],
+ polar:["Polarizing plates for ring, bar and coaxial lights","Ask vendor","Ask vendor"]
+};
+function vend(l){var v=VENDORS[l];if(!v)return"";return '<div class="vd">'+[["CCS",v[0]],["Moritex",v[1]],["VS Technology",v[2]]].map(function(x){return '<div><b>'+x[0]+'</b> '+x[1]+'</div>'}).join("")+'</div>'}
 var RULES=[
  [{goal:["measure"]},{back:3,bright:2},"Dimension work needs high-contrast edges."],
  [{goal:["measure"],where:["outline"]},{back:4,bright:-2},"An outline or hole is sharpest as a silhouette."],
@@ -190,7 +204,7 @@ function run(){
   var q=i===0?(gap>=3&&filled>=5?"strong":(gap>=1.5&&filled>=3?"moderate":"weak")):(sc[l]>=top*.7?"moderate":"weak");
   h+='<div class="rk"><div class="rh"><span class="rn">'+(i+1)+'. '+LIGHTS[l][0]+'</span><span class="cf '+(q==="strong"?"high":"")+'">'+q+' match</span></div>';
   h+='<div class="bar"><i style="width:'+Math.max(8,Math.round(sc[l]/top*100))+'%"></i></div>';
-  h+='<div class="m">'+LIGHTS[l][1]+'</div><ul>';
+  h+='<div class="m">'+LIGHTS[l][1]+'</div>'+vend(l)+'<ul>';
   why[l].slice(0,3).forEach(function(w){h+='<li>'+w+'</li>'});
   WARN.forEach(function(w){if(w[0]===l&&w[1](st))h+='<li class="wn">'+w[2]+'</li>'});
   h+='</ul></div>';
