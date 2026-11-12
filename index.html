@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lighting Advisor – machine vision prototype</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0B6E7A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lighting">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600&display=swap">
+<style>
+:root{color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#E9EDEF;--sf:#F7F9FA;--ink:#12202B;--mute:#5B6B76;--line:#C5CED4;--ac:#0B6E7A;--ac2:#B7791F;--acs:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F171D;--sf:#172129;--ink:#E6EDF1;--mute:#93A4AF;--line:#2B3A45;--ac:#4FB3BF;--ac2:#E0A94B;--acs:#0F171D}}
+:root[data-theme="dark"]{--bg:#0F171D;--sf:#172129;--ink:#E6EDF1;--mute:#93A4AF;--line:#2B3A45;--ac:#4FB3BF;--ac2:#E0A94B;--acs:#0F171D}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 Barlow,system-ui,sans-serif}
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 40px}
+h1{font:600 30px/1.1 "Barlow Condensed",Barlow,sans-serif;margin:0 0 4px;letter-spacing:.2px}
+.sub{color:var(--mute);margin:0 0 20px;max-width:60ch}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:860px){.grid{grid-template-columns:1.05fr .95fr;align-items:start}.res{position:sticky;top:16px}}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:6px;padding:16px}
+h2{font:600 18px/1.2 "Barlow Condensed",Barlow,sans-serif;margin:0 0 10px}
+.fld{margin:0 0 14px;border:0;padding:0}
+.fld legend{font-weight:600;padding:0;margin-bottom:6px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts label{position:relative}
+.opts input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.opts span{display:block;padding:6px 11px;border:1px solid var(--line);border-radius:4px;background:var(--bg);cursor:pointer}
+.opts input:checked+span{background:var(--ac);border-color:var(--ac);color:var(--acs);font-weight:500}
+.opts input:focus-visible+span{outline:2px solid var(--ac2);outline-offset:2px}
+.hint{color:var(--mute);font-size:13px;margin:4px 0 0}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:6px;padding:14px;text-align:center;color:var(--mute);cursor:pointer}
+.drop:focus-within{outline:2px solid var(--ac2)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.pv{display:none;gap:12px;margin-top:12px;align-items:flex-start}
+.pv.on{display:flex}
+.pv img{width:120px;max-width:40%;border-radius:4px;border:1px solid var(--line)}
+.m{font-size:13px;color:var(--mute)}
+.m b{color:var(--ink);font-weight:600}
+button.ap{margin-top:8px;font:inherit;font-size:13px;padding:5px 10px;border:1px solid var(--ac);background:transparent;color:var(--ac);border-radius:4px;cursor:pointer}
+button.ap:hover{background:var(--ac);color:var(--acs)}
+.rk{padding:14px 0;border-top:1px solid var(--line)}
+.rk:first-of-type{border-top:0;padding-top:0}
+.rh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rn{font:600 20px/1.2 "Barlow Condensed",Barlow,sans-serif}
+.cf{font-size:12px;padding:2px 8px;border-radius:10px;border:1px solid var(--ac2);color:var(--ac2);white-space:nowrap}
+.cf.high{border-color:var(--ac);color:var(--ac)}
+.bar{height:6px;background:var(--bg);border-radius:3px;margin:8px 0;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac);transition:width .25s}
+.rk:not(:first-of-type) .bar i{background:var(--mute)}
+.rk ul{margin:6px 0 0;padding-left:18px;color:var(--mute);font-size:14px}
+.mods{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.mods li{margin-bottom:4px}
+.wn{color:var(--ac2)}
+.empty{color:var(--mute)}
+.foot{margin-top:16px;color:var(--mute);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lighting Advisor</h1>
+  <p class="sub">Describe the part and the inspection goal. The advisor ranks lighting options using a starter rule set. Version 2. Prototype only: have your lighting engineers review the rules before relying on it.</p>
+  <div class="grid">
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <h2>1. Sample photo (optional)</h2>
+        <label class="drop" id="drop" tabindex="-1">Choose or take a photo of the part (soft room light, no flash)
+          <input type="file" id="file" accept="image/*"></label>
+        <div class="pv" id="pv"><img id="img" alt="Uploaded sample part"><div class="m" id="stats"></div></div>
+      </div>
+      <div class="card">
+        <h2>2. Application</h2>
+        <div id="form"></div>
+      </div>
+    </div>
+    <div class="card res">
+      <h2>Recommended lighting</h2>
+      <div id="out"></div>
+    </div>
+  </div>
+  <p class="foot">The photo is analyzed in your browser and is not uploaded anywhere.</p>
+</div>
+<script>
+var FIELDS=[
+ {k:"goal",t:"What must the camera see?",o:[["measure","Edges / dimensions"],["presence","Presence or absence"],["stain","Stains, discoloration"],["scratch","Scratches, dents, cracks"],["texture","Embossing, texture"],["ocr","Printed text, codes"],["dpm","Code marked on metal"],["assembly","Assembly check"],["height","Height or shape"],["color","Color / sorting"]]},
+ {k:"where",t:"Where is the feature?",o:[["outline","Outline or through-hole"],["surface","On the surface"],["cavity","Inside a cavity"]]},
+ {k:"surface",t:"Surface finish",o:[["matte","Matte"],["semi","Semi-gloss"],["mirror","Glossy / mirror"]]},
+ {k:"shape",t:"Part shape",o:[["flat","Flat"],["curved","Curved / cylindrical"],["complex","Complex 3D"]]},
+ {k:"material",t:"Material",o:[["metal","Metal"],["plastic","Plastic"],["glass","Glass / transparent"],["dark","Dark / rubber"],["pcb","PCB / mixed"],["paper","Paper / film"]]},
+ {k:"speed",t:"Part motion",o:[["static","Static / slow"],["fast","Fast inline"]]},
+ {k:"ambient",t:"Environment",o:[["enclosed","Enclosed / controlled"],["open","Open factory light"]]},
+ {k:"space",t:"Space around the part",o:[["ok","Enough room"],["tight","Tight"]]},
+ {k:"fov",t:"Field of view",o:[["small","Small (under 50 mm)"],["large","Large (over 150 mm)"]]}
+];
+var LIGHTS={
+ bright:["Bright-field ring or bar","Direct, even illumination. Good general-purpose choice on matte parts."],
+ dark:["Low-angle / dark-field ring","Raises scratches, edges and marks against a dark background."],
+ bar:["Directional bar light (low angle)","One-sided grazing light that throws shadows from relief and scratches."],
+ coax:["Coaxial diffuse light","On-axis light that evens out flat reflective surfaces and avoids hot spots."],
+ dome:["Dome light (cloudy-day)","Very diffuse light that smooths glare on curved or glossy parts."],
+ multi:["Multi-angle segmented ring","Switchable bright and dark zones for mixed heights, PCBs and assemblies."],
+ back:["Backlight","Silhouette lighting for crisp edges and presence checks."],
+ struct:["Structured light / laser line","Projects a pattern to measure height and shape."],
+ polar:["Cross-polarized light","Polarizers on light and lens cut specular glare."]
+};
+var RULES=[
+ [{goal:["measure"]},{back:3,bright:2},"Dimension work needs high-contrast edges."],
+ [{goal:["measure"],where:["outline"]},{back:4,bright:-2},"An outline or hole is sharpest as a silhouette."],
+ [{goal:["measure"],where:["surface"]},{bright:2,multi:1,back:-3},"Features on a surface need front light; a backlight shows only the outline."],
+ [{goal:["measure"],where:["cavity"]},{coax:3,bright:1,back:-3},"Features inside a cavity need on-axis light."],
+ [{goal:["presence"]},{back:2,bright:2,dome:1,multi:1},"Presence checks work with a silhouette or even front light."],
+ [{goal:["presence"],where:["outline"]},{back:2},"The outline makes presence easy to see."],
+ [{goal:["stain"],shape:["flat"],surface:["semi","mirror"]},{coax:4,dome:2},"Stains on flat glossy parts show best under even on-axis light."],
+ [{goal:["stain"],shape:["curved","complex"]},{dome:4,polar:2},"Curved parts reflect glare in many directions; diffuse light tames it."],
+ [{goal:["stain"],surface:["matte"]},{bright:3,dome:1,multi:1},"Matte surfaces diffuse light, so direct front light is enough."],
+ [{goal:["scratch"]},{dark:4,bar:4,bright:1,dome:-3},"Scratches and dents need grazing light; diffuse dome light hides them."],
+ [{goal:["scratch"],shape:["flat"],surface:["mirror"]},{coax:3},"On flat mirror-like parts, coaxial light shows scratches as dark lines."],
+ [{goal:["scratch"],shape:["curved","complex"],surface:["mirror","semi"]},{dark:-2,bar:1},"A ring can glare on glossy curves; a one-sided bar is easier to control."],
+ [{goal:["texture"]},{dark:4,bar:4,bright:1,dome:-2},"Low-angle light throws shadows that reveal surface relief."],
+ [{goal:["ocr"],surface:["mirror"],shape:["flat"]},{coax:4,dome:2},"Printed text on flat glossy surfaces reads best with coaxial light."],
+ [{goal:["ocr"],surface:["matte"]},{bright:4,dome:1},"Print on matte surfaces needs simple even front light."],
+ [{goal:["ocr"],surface:["semi"]},{dome:3,coax:2,polar:1},"Semi-gloss print can glare; diffuse or polarized light helps."],
+ [{goal:["ocr"],shape:["curved"]},{dome:3,coax:-2,bar:1},"Text on curves needs light from many directions; orient bars along the axis."],
+ [{goal:["dpm"]},{dark:4,dome:3,bar:2,coax:-1},"Laser-etched and dot-peened marks usually need dark-field or dome light."],
+ [{goal:["assembly"]},{multi:4,dome:3,bright:2},"Mixed heights and materials favor multi-angle or diffuse light."],
+ [{material:["pcb"]},{multi:4,dome:2,bright:1},"PCBs mix solder, copper and laminate reflections."],
+ [{goal:["height"]},{struct:7,back:-2,bright:-1},"Height needs a projected pattern, not flat illumination."],
+ [{goal:["color"]},{bright:3,dome:2,dark:-2},"White diffuse light keeps colors true."],
+ [{material:["glass"],goal:["measure","presence"]},{back:3},"Transparent parts show clearly as a silhouette."],
+ [{material:["glass"],goal:["stain","scratch","texture"]},{dark:4,polar:2,coax:-2},"Flaws in glass scatter light against a dark background."],
+ [{material:["dark"]},{bright:2,dark:-1},"Dark parts need strong direct light."],
+ [{material:["metal"],surface:["mirror"]},{dome:1,polar:1},"Polished metal reflects hot spots; diffuse or polarized light helps."],
+ [{material:["plastic"],surface:["semi","mirror"]},{dome:1,polar:1},"Glossy plastic glares; polarization also shows stress."],
+ [{material:["paper"]},{bright:2,dome:1},"Paper and film respond well to even front light."],
+ [{surface:["mirror"],shape:["complex"]},{dome:3,coax:-2,multi:1},"Complex glossy parts need light from every angle."],
+ [{space:["tight"]},{dome:-2,dark:-1,multi:-1},"Tight space: domes and rings need room and working distance."],
+ [{fov:["large"]},{coax:-3,dome:-2,multi:-1,bar:1},"Large field of view: coaxial and dome units become huge and costly."],
+ [{speed:["fast"]},{coax:-2,dome:-1,multi:-1},"Fast lines: diffuse optics waste light and need strobing."]
+];
+var WARN=[
+ ["struct",function(s){return s.surface==="mirror"},"Shiny surfaces can break laser-line measurement; test first."],
+ ["coax",function(s){return s.shape==="curved"||s.shape==="complex"},"Coaxial works poorly on tilted or curved surfaces."],
+ ["back",function(s){return s.where==="surface"||s.where==="cavity"},"Backlight shows only the outline and needs access behind the part."],
+ ["dome",function(s){return s.space==="tight"||s.fov==="large"},"A dome needs a short working distance and a large housing."],
+ ["dark",function(s){return s.surface==="mirror"&&s.shape!=="flat"},"A ring can glare on glossy curves; try a directional bar."],
+ ["bright",function(s){return s.material==="dark"},"Dark parts need high light power; consider strobing."],
+ ["bright",function(s){return s.goal==="color"},"Use white, high-CRI light; colored light can hide color differences."],
+ ["polar",function(s){return true},"Polarizers cut light by 2 to 3 stops; plan for a strong light."],
+ ["coax",function(s){return s.speed==="fast"},"Coaxial wastes light; plan for high power or strobing."],
+ ["dome",function(s){return s.speed==="fast"},"Dome wastes light; plan for high power or strobing."]
+];
+var st={},photo=null;
+function build(){
+ var h="";
+ FIELDS.forEach(function(f){
+  h+='<fieldset class="fld"><legend>'+f.t+'</legend><div class="opts">';
+  f.o.forEach(function(o){h+='<label><input type="radio" name="'+f.k+'" value="'+o[0]+'"><span>'+o[1]+'</span></label>'});
+  h+='</div></fieldset>';
+ });
+ document.getElementById("form").innerHTML=h;
+ document.getElementById("form").addEventListener("change",function(e){st[e.target.name]=e.target.value;run()});
+}
+function match(c){
+ for(var k in c){if(!st[k]||c[k].indexOf(st[k])<0)return false}
+ return true;
+}
+function run(){
+ var sc={},pos={},neg={},why={},k;
+ for(k in LIGHTS){pos[k]=0;neg[k]=0;why[k]=[]}
+ RULES.forEach(function(r){
+  if(!match(r[0]))return;
+  for(var l in r[1]){var v=r[1][l];if(v>0){pos[l]+=v;if(why[l].indexOf(r[2])<0)why[l].push(r[2])}else neg[l]+=v}
+ });
+ for(k in LIGHTS)sc[k]=Math.min(pos[k],9)+neg[k];
+ var rank=Object.keys(sc).filter(function(l){return sc[l]>0}).sort(function(a,b){return sc[b]-sc[a]}).slice(0,3);
+ var out=document.getElementById("out");
+ if(!st.goal||!rank.length){out.innerHTML='<p class="empty">Choose what the camera must see to get a first recommendation. Add feature location, surface, shape and material to sharpen it.</p>';return}
+ var top=sc[rank[0]],gap=top-(rank[1]?sc[rank[1]]:0),filled=Object.keys(st).length;
+ var h="";
+ rank.forEach(function(l,i){
+  var q=i===0?(gap>=3&&filled>=5?"strong":(gap>=1.5&&filled>=3?"moderate":"weak")):(sc[l]>=top*.7?"moderate":"weak");
+  h+='<div class="rk"><div class="rh"><span class="rn">'+(i+1)+'. '+LIGHTS[l][0]+'</span><span class="cf '+(q==="strong"?"high":"")+'">'+q+' match</span></div>';
+  h+='<div class="bar"><i style="width:'+Math.max(8,Math.round(sc[l]/top*100))+'%"></i></div>';
+  h+='<div class="m">'+LIGHTS[l][1]+'</div><ul>';
+  why[l].slice(0,3).forEach(function(w){h+='<li>'+w+'</li>'});
+  WARN.forEach(function(w){if(w[0]===l&&w[1](st))h+='<li class="wn">'+w[2]+'</li>'});
+  h+='</ul></div>';
+ });
+ if(rank[1]&&gap<1.5)h+='<div class="mods wn"><b>Close call:</b> the top two score almost the same. Test both on the real part.</div>';
+ if(filled<5)h+='<div class="mods m">Only '+filled+' of 9 inputs set. Fill in more to separate the options.</div>';
+ var m=mods();
+ if(m.length){h+='<div class="mods"><b>Setup notes</b><ul>';m.forEach(function(x){h+='<li>'+x+'</li>'});h+='</ul></div>'}
+ out.innerHTML=h;
+}
+function mods(){
+ var m=[];
+ if(st.speed==="fast")m.push("Fast motion: use strobed lighting, short exposure and a global-shutter camera.");
+ if(st.ambient==="open")m.push("Open light: add an enclosure or shroud, or use a narrow-band color light with a matching bandpass filter.");
+ if(st.space==="tight")m.push("Tight space: choose a compact bar or coaxial unit and a shorter working distance.");
+ if(st.fov==="large")m.push("Large field of view: check light uniformity; you may need several bars.");
+ if(st.goal==="measure")m.push("For high accuracy, pair a collimated backlight with a telecentric lens.");
+ if(st.goal==="color")m.push("Use a color camera; colored light can wash out small color differences.");
+ else if(st.material==="metal"&&st.surface!=="matte")m.push("Shiny metal: try blue light for small features, or red for less ambient sensitivity.");
+ else if(st.material==="dark")m.push("Dark parts: test red or infrared light for more reflected signal.");
+ else if(st.goal)m.push("Start with red light as a general default, then compare blue and white.");
+ m.push("Always confirm on the real part: test the top two options before buying.");
+ return m;
+}
+function analyze(img){
+ var c=document.createElement("canvas"),s=Math.min(1,220/Math.max(img.width,img.height));
+ c.width=Math.max(1,Math.round(img.width*s));c.height=Math.max(1,Math.round(img.height*s));
+ var x=c.getContext("2d");x.drawImage(img,0,0,c.width,c.height);
+ var d=x.getImageData(0,0,c.width,c.height).data,n=d.length/4,sum=0,sq=0,g=0,i,y;
+ for(i=0;i<d.length;i+=4){y=.299*d[i]+.587*d[i+1]+.114*d[i+2];sum+=y;sq+=y*y;if(y>=245)g++}
+ var mean=sum/n,sd=Math.sqrt(Math.max(0,sq/n-mean*mean)),gl=g/n*100;
+ var tip="",val=null;
+ if(gl>=3){tip="Strong highlights suggest a glossy surface.";val="mirror"}
+ else if(gl>=0.5){tip="Some highlights suggest a semi-gloss surface.";val="semi"}
+ else{tip="Few highlights suggest a matte surface.";val="matte"}
+ var dk=mean<70?" The part looks dark overall.":"";if(mean<40||gl>40)dk+=" This photo looks too dark or overexposed; retake it in soft room light without flash.";
+ var h='<b>Glare:</b> '+gl.toFixed(1)+'% of pixels<br><b>Brightness:</b> '+Math.round(mean)+'/255<br><b>Contrast:</b> '+Math.round(sd)+'<br>'+tip+dk+'<br><button type="button" class="ap" id="ap">Use “'+({matte:"Matte",semi:"Semi-gloss",mirror:"Glossy"}[val])+'” as surface</button>';
+ document.getElementById("stats").innerHTML=h;
+ document.getElementById("ap").onclick=function(){
+  var r=document.querySelector('input[name="surface"][value="'+val+'"]');r.checked=true;st.surface=val;run();
+ };
+}
+document.getElementById("file").addEventListener("change",function(e){
+ var f=e.target.files[0];if(!f)return;
+ var u=URL.createObjectURL(f),im=new Image();
+ im.onload=function(){document.getElementById("img").src=u;document.getElementById("pv").className="pv on";analyze(im)};
+ im.onerror=function(){document.getElementById("stats").textContent="That file could not be read as an image. Try a JPG or PNG.";document.getElementById("pv").className="pv on"};
+ im.src=u;
+});
+build();run();
+</script>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+</script>
+</body>
+</html>
