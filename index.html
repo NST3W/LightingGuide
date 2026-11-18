@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lighting Advisor – machine vision prototype</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0B6E7A">
+<meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Lighting">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Vision Setup">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600&display=swap">
 <style>
 :root{color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#E9EDEF;--sf:#F7F9FA;--ink:#12202B;--mute:#5B6B76;--line:#C5CED4;--ac:#0B6E7A;--ac2:#B7791F;--acs:#fff}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F171D;--sf:#172129;--ink:#E6EDF1;--mute:#93A4AF;--line:#2B3A45;--ac:#4FB3BF;--ac2:#E0A94B;--acs:#0F171D}}
-:root[data-theme="dark"]{--bg:#0F171D;--sf:#172129;--ink:#E6EDF1;--mute:#93A4AF;--line:#2B3A45;--ac:#4FB3BF;--ac2:#E0A94B;--acs:#0F171D}
+--bg:#EDEDED;--sf:#FFFFFF;--ink:#000000;--mute:#5A5A5A;--line:#BDBDBD;--ac:#000000;--ac2:#333333;--acs:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000000;--sf:#121212;--ink:#FFFFFF;--mute:#A8A8A8;--line:#3A3A3A;--ac:#FFFFFF;--ac2:#D0D0D0;--acs:#000000}}
+:root[data-theme="dark"]{--bg:#000000;--sf:#121212;--ink:#FFFFFF;--mute:#A8A8A8;--line:#3A3A3A;--ac:#FFFFFF;--ac2:#D0D0D0;--acs:#000000}
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 Barlow,system-ui,sans-serif}
@@ -59,8 +59,18 @@ button.ap:hover{background:var(--ac);color:var(--acs)}
 .rk ul{margin:6px 0 0;padding-left:18px;color:var(--mute);font-size:14px}
 .mods{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .mods li{margin-bottom:4px}
-.wn{color:var(--ac2)}
+.wn{color:var(--ac2);font-weight:600}
 .vd{margin:8px 0 0;padding:8px 10px;border-left:3px solid var(--ac);background:var(--bg);font-size:13px;color:var(--mute)}
+
+.tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:1px solid var(--line)}
+.tabs button{font:inherit;font-weight:600;padding:8px 14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mute);cursor:pointer;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);border-color:var(--ac)}
+.nf{margin:0 0 14px}.nf label{display:block;font-weight:600;margin-bottom:4px}
+.nf input,.nf select{width:100%;font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:10px}.row .nf{flex:1;min-width:0}
+.cr{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.cr:first-of-type{border-top:0}.ok{color:var(--ac);font-weight:600;white-space:nowrap}.no{color:var(--mute);white-space:nowrap}
+[hidden]{display:none!important}
 .vd b{color:var(--ink);font-weight:600;display:inline-block;min-width:96px}
 .empty{color:var(--mute)}
 .foot{margin-top:16px;color:var(--mute);font-size:13px}
@@ -68,9 +78,10 @@ button.ap:hover{background:var(--ac);color:var(--acs)}
 </head>
 <body>
 <div class="wrap">
-  <h1>Lighting Advisor</h1>
-  <p class="sub">Describe the part and the inspection goal. The advisor ranks lighting options using a starter rule set. Version 2. Prototype only: have your lighting engineers review the rules before relying on it.</p>
-  <div class="grid">
+  <h1>Vision Setup Advisor</h1>
+  <p class="sub">Choose lighting and camera resolution for a vision application using starter rules. Version 2. Prototype only: have your lighting engineers review the rules before relying on it.</p>
+  <div class="tabs" role="tablist"><button type="button" id="tL" class="on" onclick="tab(false)">Lighting</button><button type="button" id="tC" onclick="tab(true)">Camera resolution</button></div>
+  <div id="pgL"><div class="grid">
     <div>
       <div class="card" style="margin-bottom:16px">
         <h2>1. Sample photo (optional)</h2>
@@ -88,6 +99,8 @@ button.ap:hover{background:var(--ac);color:var(--acs)}
       <div id="out"></div>
     </div>
   </div>
+  </div>
+  <div id="pgC" hidden><div class="grid"><div class="card"><h2>Application and field of view</h2><div id="cf"></div></div><div class="card res"><h2>Camera resolution needed</h2><div id="co"></div></div></div></div>
   <p class="foot">The photo is analyzed in your browser and is not uploaded anywhere. Brand series names are a starting point: confirm size, color and availability in the current catalog.</p>
 </div>
 <script>
@@ -255,7 +268,79 @@ document.getElementById("file").addEventListener("change",function(e){
  im.onerror=function(){document.getElementById("stats").textContent="That file could not be read as an image. Try a JPG or PNG.";document.getElementById("pv").className="pv on"};
  im.src=u;
 });
-build();run();
+var CAMS=[
+ ["IS2800","SVGA 0.4 MP",720,540,2.8],
+ ["IS2800","1.6 MP",1440,1080,2.8],
+ ["IS2800","2 MP (newer models, confirm)",1920,1080,0],
+ ["IS3800 / IS3900","IS3801 1.6 MP",1440,1080,3.45],
+ ["IS3800 / IS3900","IS3803 3 MP",2048,1536,3.45],
+ ["IS3800 / IS3900","IS3805 5 MP",2448,2048,3.45],
+ ["IS3800 / IS3900","IS3808 8 MP",2840,2840,2.74],
+ ["IS3800 / IS3900","IS3812 12 MP",4096,3000,2.74],
+ ["IS3800 / IS3900","IS3816 16 MP",5320,3032,2.74],
+ ["IS6900","65 MP camera (CIC-A65)",9344,7000,3.2]
+].sort(function(a,b){return a[2]*a[3]-b[2]*b[3]});
+var CAPP={
+ inspect:{n:"Inspection",ft:"Smallest defect to detect (mm)",v:0.2,pf:3,pl:"Pixels across the smallest defect",ph:"Rule of thumb: 3 or more. 2 is the bare minimum."},
+ measure:{n:"Measurement",ft:"Tolerance, plus or minus (mm)",v:0.05},
+ ocr:{n:"OCR (text)",ft:"Character height (mm)",v:3,pf:25,pl:"Pixels across the character height",ph:"Typical Cognex OCR guidance: 20 to 40 pixels, with stroke width of at least 3 to 4 pixels."},
+ code:{n:"Code reading",ft:"Smallest cell (module) size (mm)",v:0.25,pf:4,pl:"Pixels per cell",ph:"Rule of thumb: 4 or more. Cell size is the code width divided by the cells across."}
+};
+var ca="inspect";
+function $(i){return document.getElementById(i)}
+function fm(x){return x>=1?x.toFixed(2):x.toFixed(3)}
+function tab(c){
+ $("pgL").hidden=c;$("pgC").hidden=!c;
+ $("tL").className=c?"":"on";$("tC").className=c?"on":"";
+}
+function setApp(k){
+ ca=k;var a=CAPP[k];
+ $("ftl").textContent=a.ft;$("ft").value=a.v;
+ $("pfw").hidden=k==="measure";$("sbw").hidden=k!=="measure";
+ if(a.pf){$("pfl").textContent=a.pl;$("pf").value=a.pf;$("pfh").textContent=a.ph}
+ calc();
+}
+function camInit(){
+ var h='<fieldset class="fld"><legend>Application</legend><div class="opts">';
+ Object.keys(CAPP).forEach(function(k){h+='<label><input type="radio" name="capp" value="'+k+'"'+(k==="inspect"?" checked":"")+'><span>'+CAPP[k].n+'</span></label>'});
+ h+='</div></fieldset>';
+ h+='<div class="row"><div class="nf"><label for="fw">Field of view width (mm)</label><input id="fw" type="number" min="0" step="any" value="60"></div>';
+ h+='<div class="nf"><label for="fh">Field of view height (mm)</label><input id="fh" type="number" min="0" step="any" value="45"></div></div>';
+ h+='<p class="hint" style="margin:-6px 0 14px">Include extra room for part position variation, about 10 to 20 percent.</p>';
+ h+='<div class="nf"><label id="ftl" for="ft"></label><input id="ft" type="number" min="0" step="any"></div>';
+ h+='<div class="nf" id="pfw"><label id="pfl" for="pf"></label><input id="pf" type="number" min="1" step="any"><div class="hint" id="pfh"></div></div>';
+ h+='<div class="nf" id="sbw" hidden><label for="sb">Edge accuracy of the vision tool</label><select id="sb"><option value="0.5">Conservative (1/2 pixel)</option><option value="0.25" selected>Typical (1/4 pixel)</option><option value="0.1">Best case (1/10 pixel)</option></select><div class="hint">Choose conservative for blurry or low-contrast edges. The 10:1 rule is used: measurement uncertainty should be at most 1/10 of the tolerance band.</div></div>';
+ $("cf").innerHTML=h;
+ $("cf").addEventListener("input",function(e){if(e.target.name==="capp")setApp(e.target.value);else calc()});
+ setApp("inspect");
+}
+function calc(){
+ var fw=+$("fw").value,fh=+$("fh").value,ft=+$("ft").value,o=$("co"),ps,note;
+ if(!(fw>0&&fh>0&&ft>0)){o.innerHTML='<p class="empty">Enter the field of view and the feature size.</p>';return}
+ if(ca==="measure"){var f=+$("sb").value;ps=(2*ft/10)/f;note="Tolerance band "+fm(2*ft)+" mm, so uncertainty must be at most "+fm(2*ft/10)+" mm."}
+ else{var n=+$("pf").value;if(!(n>0)){o.innerHTML='<p class="empty">Enter the pixels per feature.</p>';return}ps=ft/n;note=n+" pixels across a "+fm(ft)+" mm feature."}
+ var rw=Math.ceil(fw/ps),rh=Math.ceil(fh/ps);
+ var h='<div class="rk"><div class="rn">Pixel size needed: '+fm(ps)+' mm per pixel or finer</div><div class="m">'+note+'</div>';
+ h+='<div class="m" style="margin-top:6px"><b>'+rw+' × '+rh+' pixels</b> ('+(rw*rh/1e6).toFixed(1)+' MP) to cover '+fm(fw)+' × '+fm(fh)+' mm.</div></div>';
+ var rec=null,rows="";
+ CAMS.forEach(function(c){
+  var cps=Math.min(Math.max(fw/c[2],fh/c[3]),Math.max(fw/c[3],fh/c[2])),ok=cps<=ps;
+  if(!ok)return;
+  if(!rec)rec=c;
+  rows+='<div class="cr"><span><b>'+c[0]+'</b> '+c[1]+'<br><span class="m">'+c[2]+' × '+c[3]+(c[4]?', '+c[4]+' µm pixels':'')+'</span></span><span class="'+(ok?"ok":"no")+'">'+(ok?"✓ ":"✗ ")+fm(cps)+' mm/px</span></div>';
+ });
+ if(rec){
+  var cp=Math.min(Math.max(fw/rec[2],fh/rec[3]),Math.max(fw/rec[3],fh/rec[2]));
+  h+='<div class="rk"><div class="rh"><span class="rn">Smallest camera that fits</span><span class="cf high">'+(ps/cp).toFixed(1)+'x margin</span></div><div class="m"><b>'+rec[0]+' '+rec[1]+'</b> gives '+fm(cp)+' mm per pixel at this field of view.</div>';
+  if(ps/cp<1.3)h+='<ul><li class="wn">Margin is small. Consider the next size up for reliable results.</li></ul>';
+  if(rec[4]&&rec[4]<3)h+='<ul><li class="wn">Small pixels (under 3 µm) need a high-resolution lens.</li></ul>';
+  h+='</div>';
+ }else h+='<div class="rk wn"><b>No listed camera is enough in a single image.</b> Reduce the field of view (inspect in sections or use several cameras), accept a larger feature, or consider a line-scan setup.</div>';
+ if(rows)h+='<div class="mods"><b>Cameras that will work</b>'+rows+'</div>';
+ h+='<p class="m">The list uses resolutions from Cognex documentation (IS3900 uses the same IS3801 to IS3816 sensors as IS3800; IS6900 shows its 65 MP camera only). Confirm models and availability with Cognex.</p>';
+ o.innerHTML=h;
+}
+build();run();camInit();
 </script>
 <script>
 if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
