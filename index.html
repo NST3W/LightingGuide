@@ -270,16 +270,20 @@ document.getElementById("file").addEventListener("change",function(e){
  im.src=u;
 });
 var CAMS=[
- ["IS2800","SVGA 0.4 MP",720,540,2.8],
- ["IS2800","1.6 MP",1440,1080,2.8],
- ["IS2800","2 MP (newer models, confirm)",1920,1080,0],
- ["IS3800 / IS3900","IS3801 1.6 MP",1440,1080,3.45],
- ["IS3800 / IS3900","IS3803 3 MP",2048,1536,3.45],
- ["IS3800 / IS3900","IS3805 5 MP",2448,2048,3.45],
- ["IS3800 / IS3900","IS3808 8 MP",2840,2840,2.74],
- ["IS3800 / IS3900","IS3812 12 MP",4096,3000,2.74],
- ["IS3800 / IS3900","IS3816 16 MP",5320,3032,2.74],
- ["IS6900","65 MP camera (CIC-A65)",9344,7000,3.2]
+ ["IS2800","SVGA 0.4 MP",720,540,2.8,"IS2800"],
+ ["IS2800","1.6 MP",1440,1080,2.8,"IS2800"],
+ ["IS2800","IS2802 2 MP",1920,1080,2.8,"IS2802"],
+ ["IS3800 / IS3900","IS3801 1.6 MP",1440,1080,3.45,"IS3801"],
+ ["IS3800 / IS3900","IS3803 3 MP",2048,1536,3.45,"IS3803"],
+ ["IS3800 / IS3900","IS3805 5 MP",2448,2048,3.45,"IS3805"],
+ ["IS3800 / IS3900","IS3808 8 MP",2840,2840,2.74,"IS3808"],
+ ["IS3800 / IS3900","IS3812 12 MP",4096,3000,2.74,"IS3812"],
+ ["IS3800 / IS3900","IS3816 16 MP",5320,3032,2.74,"IS3816"],
+ ["IS8900","IS8900 0.5 MP",800,600,2.74,"IS8900"],
+ ["IS8900","IS8902 2 MP",1920,1200,2.74,"IS8902"],
+ ["IS8900","IS8905 5 MP",2448,2048,2.74,"IS8905"],
+ ["IS8900","IS8912 12 MP",4096,3000,2.74,"IS8912"],
+ ["IS6900","65 MP camera (CIC-A65)",9344,7000,3.2,"IS6900"]
 ].sort(function(a,b){return a[2]*a[3]-b[2]*b[3]});
 var CAPP={
  inspect:{n:"Inspection",ft:"Smallest defect to detect (mm)",v:0.2,pf:3,pl:"Pixels across the smallest defect",ph:"Rule of thumb: 3 or more. 2 is the bare minimum."},
@@ -338,12 +342,18 @@ function calc(){
   h+='</div>';
  }else h+='<div class="rk wn"><b>No listed camera is enough in a single image.</b> Reduce the field of view (inspect in sections or use several cameras), accept a larger feature, or consider a line-scan setup.</div>';
  if(rows)h+='<div class="mods"><b>Cameras that will work</b>'+rows+'</div>';
- h+='<p class="m">The list uses resolutions from Cognex documentation (IS3900 uses the same IS3801 to IS3816 sensors as IS3800; IS6900 shows its 65 MP camera only). Confirm models and availability with Cognex.</p>';
+ h+='<p class="m">The list uses resolutions from Cognex documentation (IS3900 uses the same IS3801 to IS3816 sensors as IS3800; IS2802 is the 2 MP IS2800 model, IS8900 sensors are 2.74 µm, and IS6900 shows its 65 MP camera only). Confirm models and availability with Cognex.</p>';
  o.innerHTML=h;
 }
 var LENS=[
- ["6.2 mm autofocus","af",6.2,"integrated, confirm model",["IS2800"]],
- ["16 mm autofocus","af",16,"integrated, confirm model",["IS2800"]],
+ ["6.2 mm autofocus","af",6.2,"IS2800 Mini, HSLL",["IS2800"]],
+ ["8 mm autofocus","af",8,"Multi Torch, HSLL",["IS2800"]],
+ ["12 mm autofocus","af",12,"Multi Torch, HSLL",["IS2800","IS2802"]],
+ ["16 mm autofocus","af",16,"Multi Torch or Mini, HSLL",["IS2800","IS2802"]],
+ ["6.2 mm manual focus","cm",6.2,"IS2800 Mini",["IS2800"]],
+ ["8 mm manual focus","cm",8,"Multi Torch",["IS2800"]],
+ ["12 mm manual focus","cm",12,"Multi Torch",["IS2800","IS2802"]],
+ ["16 mm manual focus","cm",16,"Multi Torch or Mini",["IS2800","IS2802"]],
  ["8 mm HSLL","af",8,"CLN-C08F8FS-HSLL",["IS3801","IS3803"]],
  ["10 mm HSLL","af",10,"CLN-C10F5FS-HSLL",["IS3801","IS3803","IS3805"]],
  ["16 mm HSLL","af",16,"CLN-C16F8FS-HSLL",["IS3801","IS3803","IS3805"]],
@@ -364,10 +374,27 @@ var LENS=[
  ["12 mm Moritex SR","cm",12,"ML-U1217SR-18C",["IS3808","IS3812","IS3816"]],
  ["16 mm Moritex SR","cm",16,"ML-U1615SR-18C",["IS3808","IS3812","IS3816"]],
  ["25 mm Moritex SR","cm",25,"ML-U2515SR-18C",["IS3808","IS3812","IS3816"]],
- ["35 mm Moritex SR","cm",35,"ML-U3518SR-18C",["IS3808","IS3812","IS3816"]]
+ ["35 mm Moritex SR","cm",35,"ML-U3518SR-18C",["IS3808","IS3812","IS3816"]],
+ ["6 mm Moritex UR","cm",6,"ML-M0625UR",["IS8900","IS8902","IS8905"]],
+ ["8 mm Moritex UR","cm",8,"ML-M0822UR",["IS8900","IS8902","IS8905"]],
+ ["12 mm Moritex UR","cm",12,"ML-M1218UR",["IS8900","IS8902","IS8905"]],
+ ["16 mm Moritex UR","cm",16,"ML-M1616UR",["IS8900","IS8902","IS8905"]],
+ ["25 mm Moritex UR","cm",25,"ML-M2516UR",["IS8900","IS8902","IS8905"]],
+ ["35 mm Moritex UR","cm",35,"ML-M3520UR",["IS8900","IS8902","IS8905"]],
+ ["50 mm Moritex UR","cm",50,"ML-M5025UR",["IS8900","IS8902","IS8905"]],
+ ["6 mm Moritex SR","cm",6,"ML-U0618SR-18C",["IS8912"]],
+ ["8 mm Moritex SR","cm",8,"ML-U0817SR-18C",["IS8912"]],
+ ["12 mm Moritex SR","cm",12,"ML-U1217SR-18C",["IS8912"]],
+ ["16 mm Moritex SR","cm",16,"ML-U1615SR-18C",["IS8912"]],
+ ["25 mm Moritex SR","cm",25,"ML-U2515SR-18C",["IS8912"]],
+ ["35 mm Moritex SR","cm",35,"ML-U3518SR-18C",["IS8912"]],
+ ["50 mm Moritex SR","cm",50,"ML-U5022SR-18C",["IS8912"]],
+ ["16 mm HSLL-HR","af",16,"CLN-C16F65-HSLL-HR, confirm camera",["IS8900","IS8902","IS8905","IS8912"]],
+ ["25 mm HSLL-HR","af",25,"CLN-C25F65-HSLL-HR, confirm camera",["IS8900","IS8902","IS8905","IS8912"]],
+ ["35 mm HSLL-HR","af",35,"CLN-C35F06-HSLL-HR, confirm camera",["IS8900","IS8902","IS8905","IS8912"]]
 ];
 var LC=CAMS.filter(function(c){return c[4]>0}),LS="lens";
-function ckey(c){var m=c[1].match(/IS38\d\d/);return m?m[0]:c[0]}
+function ckey(c){return c[5]}
 function sens(c){return [c[2]*c[4]/1000,c[3]*c[4]/1000]}
 function view(f,s,wd){var a=(wd-f)/f;return [s[0]*a,s[1]*a]}
 function best(f,s,wd,fw,fh){
@@ -387,7 +414,7 @@ function lensInit(){
  LC.forEach(function(c,i){h+='<option value="'+i+'"'+(c[1].indexOf("IS3803")>=0?" selected":"")+'>'+c[0]+" "+c[1]+" ("+c[2]+" × "+c[3]+")</option>"});
  h+='</select></div>';
  h+='<div id="g_wd" class="nf"><label for="lwd">Working distance, lens to part (mm)</label><input id="lwd" type="number" min="0" step="any" value="300"></div>';
- h+='<div id="g_type" class="nf"><label for="lt">Lens type</label><select id="lt"><option value="af">Auto focus liquid lens</option><option value="cm">C-mount lens</option></select></div>';
+ h+='<div id="g_type" class="nf"><label for="lt">Lens type</label><select id="lt"><option value="af">Auto focus liquid lens</option><option value="cm">C-mount / manual focus lens</option></select></div>';
  h+='<div id="g_lens" class="nf"><label for="ll">Lens (Cognex)</label><select id="ll"></select></div>';
  $("lf").innerHTML=h;
  $("lf").addEventListener("input",function(e){if(e.target.name==="lsolve")LS=e.target.value;lsync()});
@@ -399,7 +426,7 @@ function lsync(){
  LENS.forEach(function(l,i){
   if(LS!=="type"&&l[1]!==t)return;
   if(LS!=="cam"&&l[4].indexOf(k)<0)return;
-  o+='<option value="'+i+'">'+l[0]+' ('+l[3]+')</option>';if(String(i)===prev)ok=true;
+  o+='<option value="'+i+'">'+l[0]+' ('+l[3]+')'+(LS==="cam"?' - '+l[4].join(", "):'')+'</option>';if(String(i)===prev)ok=true;
  });
  if(!o)o='<option value="">No Cognex lens listed for this choice</option>';
  $("ll").innerHTML=o;if(ok)$("ll").value=prev;
@@ -426,7 +453,7 @@ function calcL(){
    if(b.waste>1.8)h+='<ul><li class="wn">The field is much larger than needed, so you lose resolution.</li></ul>';
    h+='</div>';
   });
-  h+=t==="af"?'<p class="m">Autofocus liquid lens: refocuses by software when the working distance or part height changes. Confirm the focus range of the lens you pick.</p>':'<p class="m">C-mount lens: set the focus by hand at the working distance and lock it. Best for fixed distances and high resolution.</p>';
+  h+=t==="af"?'<p class="m">Autofocus liquid lens: refocuses by software when the working distance or part height changes. Confirm the focus range of the lens you pick.</p>':'<p class="m">C-mount or manual focus lens: set the focus by hand at the working distance and lock it. Best for fixed distances and high resolution.</p>';
  }else if(LS==="fov"){
   var v=view(L[2],s,wd);
   h='<div class="rk"><div class="rn">Field of view: '+fm(v[0])+' × '+fm(v[1])+' mm</div><div class="m">'+L[0]+' on '+c[0]+' '+c[1]+' at '+fm(wd)+' mm. Rotating the camera 90° gives '+fm(v[1])+' × '+fm(v[0])+' mm.</div></div>';
