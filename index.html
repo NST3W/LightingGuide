@@ -79,8 +79,8 @@ button.ap:hover{background:var(--ac);color:var(--acs)}
 <body>
 <div class="wrap">
   <h1>Vision Setup Advisor</h1>
-  <p class="sub">Choose lighting and camera resolution for a vision application using starter rules. Version 2. Prototype only: have your lighting engineers review the rules before relying on it.</p>
-  <div class="tabs" role="tablist"><button type="button" id="tL" class="on" onclick="tab(false)">Lighting</button><button type="button" id="tC" onclick="tab(true)">Camera resolution</button></div>
+  <p class="sub">Choose lighting, camera resolution and lens for a vision application using starter rules. Version 2. Prototype only: have your lighting engineers review the rules before relying on it.</p>
+  <div class="tabs" role="tablist"><button type="button" id="tL" class="on" onclick="tab(0)">Lighting</button><button type="button" id="tC" onclick="tab(1)">Camera resolution</button><button type="button" id="tN" onclick="tab(2)">Lens</button></div>
   <div id="pgL"><div class="grid">
     <div>
       <div class="card" style="margin-bottom:16px">
@@ -101,6 +101,7 @@ button.ap:hover{background:var(--ac);color:var(--acs)}
   </div>
   </div>
   <div id="pgC" hidden><div class="grid"><div class="card"><h2>Application and field of view</h2><div id="cf"></div></div><div class="card res"><h2>Camera resolution needed</h2><div id="co"></div></div></div></div>
+  <div id="pgN" hidden><div class="grid"><div class="card"><h2>Lens inputs</h2><div id="lf"></div></div><div class="card res"><h2>Lens result</h2><div id="lo"></div></div></div></div>
   <p class="foot">The photo is analyzed in your browser and is not uploaded anywhere. Brand series names are a starting point: confirm size, color and availability in the current catalog.</p>
 </div>
 <script>
@@ -289,9 +290,9 @@ var CAPP={
 var ca="inspect";
 function $(i){return document.getElementById(i)}
 function fm(x){return x>=1?x.toFixed(2):x.toFixed(3)}
-function tab(c){
- $("pgL").hidden=c;$("pgC").hidden=!c;
- $("tL").className=c?"":"on";$("tC").className=c?"on":"";
+function tab(n){
+ ["pgL","pgC","pgN"].forEach(function(id,i){$(id).hidden=i!==n});
+ ["tL","tC","tN"].forEach(function(id,i){$(id).className=i===n?"on":""});
 }
 function setApp(k){
  ca=k;var a=CAPP[k];
@@ -340,7 +341,112 @@ function calc(){
  h+='<p class="m">The list uses resolutions from Cognex documentation (IS3900 uses the same IS3801 to IS3816 sensors as IS3800; IS6900 shows its 65 MP camera only). Confirm models and availability with Cognex.</p>';
  o.innerHTML=h;
 }
-build();run();camInit();
+var LENS=[
+ ["6.2 mm autofocus","af",6.2,"integrated, confirm model",["IS2800"]],
+ ["16 mm autofocus","af",16,"integrated, confirm model",["IS2800"]],
+ ["8 mm HSLL","af",8,"CLN-C08F8FS-HSLL",["IS3801","IS3803"]],
+ ["10 mm HSLL","af",10,"CLN-C10F5FS-HSLL",["IS3801","IS3803","IS3805"]],
+ ["16 mm HSLL","af",16,"CLN-C16F8FS-HSLL",["IS3801","IS3803","IS3805"]],
+ ["24 mm HSLL","af",24,"CLN-C24F6FS-HSLL",["IS3801","IS3803","IS3805"]],
+ ["16 mm HSLL","af",16,"confirm part number",["IS3808","IS3812","IS3816"]],
+ ["25 mm HSLL-HR","af",25,"CLN-C25F65-HSLL-HR",["IS3808","IS3812","IS3816"]],
+ ["35 mm HSLL","af",35,"confirm part number",["IS3808","IS3812","IS3816"]],
+ ["8 mm Moritex HR","cm",8,"ML-M0818HR",["IS3801"]],
+ ["12 mm Moritex HR","cm",12,"ML-M1218HR",["IS3801"]],
+ ["16 mm Moritex HR","cm",16,"ML-M1618HR",["IS3801"]],
+ ["25 mm Moritex HR","cm",25,"ML-M2518HR",["IS3801"]],
+ ["35 mm Moritex HR","cm",35,"ML-M3520HR",["IS3801"]],
+ ["8 mm Moritex UR","cm",8,"ML-M0822UR",["IS3801","IS3803","IS3805"]],
+ ["12 mm Moritex UR","cm",12,"ML-M1218UR",["IS3801","IS3803","IS3805"]],
+ ["16 mm Moritex UR","cm",16,"ML-M1616UR",["IS3801","IS3803","IS3805"]],
+ ["25 mm Moritex UR","cm",25,"ML-M2516UR",["IS3801","IS3803","IS3805"]],
+ ["35 mm Moritex UR","cm",35,"ML-M3520UR",["IS3801","IS3803","IS3805"]],
+ ["12 mm Moritex SR","cm",12,"ML-U1217SR-18C",["IS3808","IS3812","IS3816"]],
+ ["16 mm Moritex SR","cm",16,"ML-U1615SR-18C",["IS3808","IS3812","IS3816"]],
+ ["25 mm Moritex SR","cm",25,"ML-U2515SR-18C",["IS3808","IS3812","IS3816"]],
+ ["35 mm Moritex SR","cm",35,"ML-U3518SR-18C",["IS3808","IS3812","IS3816"]]
+];
+var LC=CAMS.filter(function(c){return c[4]>0}),LS="lens";
+function ckey(c){var m=c[1].match(/IS38\d\d/);return m?m[0]:c[0]}
+function sens(c){return [c[2]*c[4]/1000,c[3]*c[4]/1000]}
+function view(f,s,wd){var a=(wd-f)/f;return [s[0]*a,s[1]*a]}
+function best(f,s,wd,fw,fh){
+ var v=view(f,s,wd),a=[v[0],v[1]],b=[v[1],v[0]];
+ var ca=a[0]>=fw&&a[1]>=fh,cb=b[0]>=fw&&b[1]>=fh;
+ if(ca)return {w:a[0],h:a[1],ok:true,rot:false};
+ if(cb)return {w:b[0],h:b[1],ok:true,rot:true};
+ var ra=Math.min(a[0]/fw,a[1]/fh),rb=Math.min(b[0]/fw,b[1]/fh);
+ return ra>=rb?{w:a[0],h:a[1],ok:false,rot:false}:{w:b[0],h:b[1],ok:false,rot:true};
+}
+function lensInit(){
+ var h='<fieldset class="fld"><legend>What do you want to find?</legend><div class="opts">';
+ [["lens","Lens"],["fov","Field of view"],["wd","Working distance"],["cam","Camera"]].forEach(function(x){h+='<label><input type="radio" name="lsolve" value="'+x[0]+'"'+(x[0]==="lens"?" checked":"")+'><span>'+x[1]+'</span></label>'});
+ h+='</div><p class="hint">Fill in the other four.</p></fieldset>';
+ h+='<div id="g_fov" class="row"><div class="nf"><label for="lfw">Field of view width (mm)</label><input id="lfw" type="number" min="0" step="any" value="60"></div><div class="nf"><label for="lfh">Field of view height (mm)</label><input id="lfh" type="number" min="0" step="any" value="45"></div></div>';
+ h+='<div id="g_cam" class="nf"><label for="lc">Camera</label><select id="lc">';
+ LC.forEach(function(c,i){h+='<option value="'+i+'"'+(c[1].indexOf("IS3803")>=0?" selected":"")+'>'+c[0]+" "+c[1]+" ("+c[2]+" × "+c[3]+")</option>"});
+ h+='</select></div>';
+ h+='<div id="g_wd" class="nf"><label for="lwd">Working distance, lens to part (mm)</label><input id="lwd" type="number" min="0" step="any" value="300"></div>';
+ h+='<div id="g_type" class="nf"><label for="lt">Lens type</label><select id="lt"><option value="af">Auto focus liquid lens</option><option value="cm">C-mount lens</option></select></div>';
+ h+='<div id="g_lens" class="nf"><label for="ll">Lens (Cognex)</label><select id="ll"></select></div>';
+ $("lf").innerHTML=h;
+ $("lf").addEventListener("input",function(e){if(e.target.name==="lsolve")LS=e.target.value;lsync()});
+ lsync();
+}
+function lsync(){
+ ["fov","cam","wd","type","lens"].forEach(function(x){$("g_"+x).hidden=(LS===x)});
+ var c=LC[+$("lc").value],k=ckey(c),t=$("lt").value,prev=$("ll").value,o="",ok=false;
+ LENS.forEach(function(l,i){
+  if(LS!=="type"&&l[1]!==t)return;
+  if(LS!=="cam"&&l[4].indexOf(k)<0)return;
+  o+='<option value="'+i+'">'+l[0]+' ('+l[3]+')</option>';if(String(i)===prev)ok=true;
+ });
+ if(!o)o='<option value="">No Cognex lens listed for this choice</option>';
+ $("ll").innerHTML=o;if(ok)$("ll").value=prev;
+ calcL();
+}
+function fo(b){return fm(b.w)+" × "+fm(b.h)+" mm"}
+function calcL(){
+ var c=LC[+$("lc").value],s=sens(c),k=ckey(c),fw=+$("lfw").value,fh=+$("lfh").value,wd=+$("lwd").value,t=$("lt").value,li=$("ll").value,L=li===""?null:LENS[+li],o=$("lo"),h="",bad="";
+ if(LS!=="fov"&&!(fw>0&&fh>0))bad="Enter the field of view width and height.";
+ else if(LS!=="wd"&&!(wd>0))bad="Enter the working distance.";
+ else if((LS==="fov"||LS==="wd"||LS==="cam"||LS==="type")&&!L)bad="Choose a lens. If none is listed, there is no Cognex lens for this camera and lens type.";
+ else if(L&&LS!=="wd"&&LS!=="lens"&&wd<=L[2])bad="Working distance must be larger than the focal length ("+L[2]+" mm).";
+ if(bad){o.innerHTML='<p class="empty">'+bad+'</p>';return}
+ var note='<p class="m">Thin-lens estimate with the working distance measured from the lens. Confirm with the Cognex field-of-view tables and a real test. IS3900 is assumed to use the same lens table as IS3800.</p>';
+ if(LS==="lens"){
+  var s0=s[0],s1=s[1],fa=Math.min(s0*wd/(fw+s0),s1*wd/(fh+s1)),fb=Math.min(s1*wd/(fw+s1),s0*wd/(fh+s0)),fr=Math.max(fa,fb),list=[];
+  LENS.forEach(function(l){if(l[1]!==t||l[4].indexOf(k)<0||wd<=l[2])return;var b=best(l[2],s,wd,fw,fh);b.l=l;b.waste=b.w*b.h/(fw*fh);list.push(b)});
+  var oks=list.filter(function(b){return b.ok}).sort(function(a,b){return a.waste-b.waste});
+  h='<div class="rk"><div class="rn">Focal length needed: '+fr.toFixed(1)+' mm or shorter</div><div class="m">To cover '+fm(fw)+' × '+fm(fh)+' mm at '+fm(wd)+' mm with this camera. The longest lens that still covers the field gives the most detail.</div></div>';
+  if(!list.length)h+='<div class="rk wn"><b>No Cognex lens of this type is listed for this camera.</b> Try the other lens type, or ask Cognex.</div>';
+  else if(!oks.length)h+='<div class="rk wn"><b>No listed lens covers this field at this distance.</b> Increase the working distance, reduce the field of view, or choose a camera with a larger sensor.</div>';
+  oks.slice(0,3).forEach(function(b,i){
+   h+='<div class="rk"><div class="rh"><span class="rn">'+(i+1)+'. '+b.l[0]+'</span><span class="cf '+(i===0?"high":"")+'">'+(b.waste<=1.3?"tight fit":b.waste<=1.8?"good fit":"wide fit")+'</span></div><div class="m">'+b.l[3]+'<br>Field of view: <b>'+fo(b)+'</b>'+(b.rot?' (rotate the camera 90°)':'')+'</div>';
+   if(b.waste>1.8)h+='<ul><li class="wn">The field is much larger than needed, so you lose resolution.</li></ul>';
+   h+='</div>';
+  });
+  h+=t==="af"?'<p class="m">Autofocus liquid lens: refocuses by software when the working distance or part height changes. Confirm the focus range of the lens you pick.</p>':'<p class="m">C-mount lens: set the focus by hand at the working distance and lock it. Best for fixed distances and high resolution.</p>';
+ }else if(LS==="fov"){
+  var v=view(L[2],s,wd);
+  h='<div class="rk"><div class="rn">Field of view: '+fm(v[0])+' × '+fm(v[1])+' mm</div><div class="m">'+L[0]+' on '+c[0]+' '+c[1]+' at '+fm(wd)+' mm. Rotating the camera 90° gives '+fm(v[1])+' × '+fm(v[0])+' mm.</div></div>';
+ }else if(LS==="wd"){
+  var w1=L[2]*(Math.max(fw/s[0],fh/s[1])+1),w2=L[2]*(Math.max(fw/s[1],fh/s[0])+1),wr=Math.min(w1,w2),b=best(L[2],s,wr,fw,fh);
+  h='<div class="rk"><div class="rn">Working distance: '+fm(wr)+' mm or more</div><div class="m">'+L[0]+' on '+c[0]+' '+c[1]+'. At this distance the field of view is '+fo(b)+(w2<w1?' (rotate the camera 90°).':'.')+'</div></div>';
+ }else if(LS==="cam"){
+  var rows="";
+  LC.forEach(function(cc){if(L[4].indexOf(ckey(cc))<0)return;var b=best(L[2],sens(cc),wd,fw,fh);if(!b.ok)return;rows+='<div class="cr"><span><b>'+cc[0]+'</b> '+cc[1]+'<br><span class="m">Field of view '+fo(b)+(b.rot?', rotated 90°':'')+'</span></span><span class="ok">'+fm(b.w/(b.rot?cc[3]:cc[2]))+' mm/px</span></div>'});
+  h='<div class="rk"><div class="rn">Cameras that work with '+L[0]+'</div><div class="m">Covering '+fm(fw)+' × '+fm(fh)+' mm at '+fm(wd)+' mm. Use the Camera resolution tab to check the resolution you need.</div></div>';
+  h+=rows?'<div class="mods">'+rows+'</div>':'<div class="rk wn"><b>No listed camera covers this field with this lens.</b> Try a shorter lens or a larger working distance.</div>';
+ }else{
+  var b2=best(L[2],s,wd,fw,fh),ty=L[1]==="af"?"an auto focus liquid lens":"a C-mount lens";
+  h='<div class="rk"><div class="rn">'+L[0]+' is '+ty+'</div><div class="m">'+L[3]+'. Field of view at '+fm(wd)+' mm: '+fo({w:view(L[2],s,wd)[0],h:view(L[2],s,wd)[1]})+'.</div>';
+  if(L[4].indexOf(k)<0)h+='<ul><li class="wn">This lens is not listed for the selected camera. Check compatibility with Cognex.</li></ul>';
+  h+='</div><p class="m">'+(L[1]==="af"?"Autofocus handles changing distances and speeds up setup.":"C-mount gives the most optical choice and resolution at a fixed distance, with manual focus.")+'</p>';
+ }
+ o.innerHTML=h+note;
+}
+build();run();camInit();lensInit();
 </script>
 <script>
 if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
